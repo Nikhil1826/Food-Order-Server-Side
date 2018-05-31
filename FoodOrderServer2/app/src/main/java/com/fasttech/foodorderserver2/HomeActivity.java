@@ -25,12 +25,18 @@ import android.widget.Toast;
 
 import com.fasttech.foodorderserver2.Interface.ItemClickListener;
 import com.fasttech.foodorderserver2.Model.Category;
+import com.fasttech.foodorderserver2.Model.Token;
 import com.fasttech.foodorderserver2.ViewHolder.MenuViewHolder;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -42,8 +48,6 @@ import java.util.UUID;
 
 import dmax.dialog.SpotsDialog;
 import info.hoang8f.widget.FButton;
-
-import static com.fasttech.foodorderserver2.CurrentUser.cUser;
 
 public class HomeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -85,7 +89,7 @@ public class HomeActivity extends AppCompatActivity
 
 
 
-
+categories.keepSynced(true);
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -114,6 +118,19 @@ public class HomeActivity extends AppCompatActivity
 
 
         loadMenu();
+
+
+        //Send Token
+        updateToken(FirebaseInstanceId.getInstance().getToken());
+
+
+    }
+
+    private void updateToken(String token) {
+        FirebaseDatabase db = FirebaseDatabase.getInstance();
+        DatabaseReference tokens = db.getReference("Tokens");
+        Token data = new Token(token,true);
+        tokens.child(CurrentUser.cUser.getPhone()).setValue(data);
     }
 
     private void showDialog() {
@@ -204,8 +221,8 @@ public class HomeActivity extends AppCompatActivity
                     .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                            double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
-                            dialog.setMessage("Uploaded " + progress + "%");
+                           // double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
+                           // dialog.setMessage("Uploaded " + progress + "%");
                         }
                     });
 
@@ -282,9 +299,7 @@ public class HomeActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+
 
         return super.onOptionsItemSelected(item);
     }
@@ -294,6 +309,16 @@ public class HomeActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
+
+        if(id == R.id.nav_orders){
+            Intent intent = new Intent(HomeActivity.this,OrderStatusActivity.class);
+            startActivity(intent);
+        }else if(id == R.id.nav_sign_out){
+            Intent intent = new Intent(HomeActivity.this,SignInActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+
+        }
 
 
 
@@ -317,6 +342,22 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void deleteCaregory(String key,Category item) {
+        DatabaseReference foods = database.getReference("Foods");
+        Query foodInCategory = foods.orderByChild("menuId").equalTo(key);
+
+        foodInCategory.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for(DataSnapshot postSnapShot:dataSnapshot.getChildren()){
+                    postSnapShot.getRef().removeValue();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
         categories.child(key).removeValue();
         Snackbar.make(findViewById(R.id.drawer_layout),"Category "+"\""+item.getName()+"\""+" deleted",Snackbar.LENGTH_SHORT).show();
 
@@ -406,8 +447,8 @@ public class HomeActivity extends AppCompatActivity
                 .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                        double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
-                        dialog.setMessage("Uploaded "+progress+"%");
+                        //double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
+                        //dialog.setMessage("Uploaded "+progress+"%");
                     }
                 });
     }

@@ -87,8 +87,6 @@
                 android:layout_weight="1"
                 android:alpha="0.9"
                 android:text="Select"
-                app:cornerRadius="20dp"
-
                 android:textColor="@android:color/white"
                 app:buttonColor="@color/btncontinu"
                 app:shadowColor="@android:color/black"
@@ -105,7 +103,6 @@
                 android:layout_marginRight="8dp"
                 android:layout_weight="1"
                 android:alpha="0.9"
-                app:cornerRadius="20dp"
                 android:text="Upload"
                 android:textColor="@android:color/white"
                 app:buttonColor="@color/colorPrimary"
